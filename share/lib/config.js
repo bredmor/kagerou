@@ -1,8 +1,8 @@
 'use strict'
 
-const VERSION = '0.7.23'
-const CODENAME = 'Additional Memory'
-const DESCRIPTION = '\'友達なんかに、なりたくなかった\''
+const VERSION = '0.7.26'
+const CODENAME = 'Lost-day Hours'
+const DESCRIPTION = '\'今日も夕ご飯のことを考える\''
 
 const CONFIG_DEFAULT = {
   lang: 'ko',
@@ -139,6 +139,7 @@ const CONFIG_DEFAULT = {
     pld: 'rgb(21, 28, 100)', // Indigo 900 (B -10%)
     war: 'rgb(153, 23, 23)', // Red 900 (B -10%)
     drk: 'rgb(136, 14, 79)', // Pink 900
+    gnb: 'rgb(78, 52, 46)', // Brown 800
     mnk: 'rgb(255, 152, 0)', // Orange 500
     drg: 'rgb(63, 81, 181)', // Indigo 500
     brd: 'rgb(158, 157, 36)', // Lime 800
@@ -147,6 +148,8 @@ const CONFIG_DEFAULT = {
     blm: 'rgb(126, 87, 194)', // Deep Purple 400
     mch: 'rgb(0, 151, 167)', // Cyan 700
     rdm: 'rgb(233, 30, 99)', // Pink 500
+    blu: 'rgb(0, 185, 247)', // Light Blue 500
+    dnc: 'rgb(244, 143, 177)', // Pink 200
     sam: 'rgb(255, 202, 40)', // Amber 400
     whm: 'rgb(117, 117, 117)', // Gray 600
     sch: 'rgb(121, 134, 203)', // Indigo 300
@@ -198,6 +201,12 @@ const CONFIG_DEFAULT = {
 `
 }
 
+const MIGRATE_MAP = {
+  'color.gnb': { if: _ => !_, action: 'default' },
+  'color.blu': { if: _ => !_, action: 'default' },
+  'color.dnc': { if: _ => !_, action: 'default' }
+}
+
 const CONFIG_KEY_SHOULD_OVERRIDE = [
   'tabs'
 ]
@@ -228,6 +237,13 @@ const COLUMN_USE_LARGER = {
   'MAXHIT': ['MAXHIT', 'maxhit'],
   'MAXHEAL': ['MAXHEAL', 'maxheal']
 }
+
+const VALID_PLAYER_JOBS = [
+  'GLA', 'GLD', 'MRD', 'PUG', 'PGL', 'LNC', 'ROG', 'ARC', 'THM', 'ACN', 'CNJ',
+  'PLD', 'WAR', 'MNK', 'DRG', 'NIN', 'BRD', 'BLM', 'SMN', 'SCH', 'WHM', 'DRK',
+  'MCH', 'AST', 'SAM', 'RDM', 'BLU', 'GNB', 'DNC',
+  'CRP', 'BSM', 'ARM', 'GSM', 'LTW', 'WVR', 'ALC', 'CUL', 'MIN', 'BTN', 'FSH'
+]
 
 const PET_MAPPING = {
   '카벙클 에메랄드': 'acn-pet',
@@ -539,6 +555,28 @@ const COLUMN_INDEX = {
       }
 
       return this.config
+    }
+
+    migrate() {
+      if(!this.config) { return false }
+
+      Object.keys(MIGRATE_MAP).map(k => {
+        let v = this.get(k)
+        let cond = MIGRATE_MAP[k]
+        if(cond.if(v)) {
+          let result
+          if(typeof cond.action === 'function') {
+            result = cond.action(v)
+          } else {
+            switch(cond.action) {
+              case 'default':
+                result = resolveDotIndex(CONFIG_DEFAULT, k)
+                break
+            }
+          }
+          this.set(k, result)
+        }
+      })
     }
 
     init() {
